@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import Header from "./components/Header";
 import PlaceCard from "./components/PlaceCard";
 
 export default function Home() {
