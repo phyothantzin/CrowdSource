@@ -3,17 +3,14 @@ import Link from "next/link";
 import PlaceCard from "./components/PlaceCard";
 
 export default function Home() {
-  const isLoggedIn = false; // Replace with actual auth logic
   const recommendedPlaces = [
-    // Add mock data here
     {
       id: 1,
-      photo: "/images/place1.jpg",
-      title: "Amazing Restaurant",
-      description: "A fantastic dining experience",
-      hashtags: ["food", "finedining"],
+      photo: "./sample.png",
+      title: "Bagan",
+      description: "A fantastic experience",
+      hashtags: ["pagoda", "breathtaking"],
     },
-    // Add more mock places...
   ];
 
   return (
