@@ -2,9 +2,8 @@
 
 import { connectDB } from "../mongoose";
 import Place, { IPlace } from "@/database/place.model";
+import User from "@/database/user.model";
 import { revalidatePath } from "next/cache";
-
-// Get the Place model
 
 // Create a new place
 export async function createPlace(params: any) {
@@ -33,7 +32,7 @@ export async function getPlaces() {
   try {
     await connectDB();
     const places = await Place.find()
-      .populate("user", "username image") // Populate user with name and image
+      .populate({ path: "user", model: User }) // Populate user with name and image
       .sort({ createdAt: -1 });
     return places;
   } catch (error: any) {
