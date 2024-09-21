@@ -30,7 +30,6 @@ export default function CreateRecommendPlaceForm({
     if (e.key === "Enter" && hashtag.trim() !== "") {
       e.preventDefault();
       setHashtags([...hashtags, `#${hashtag.trim()}`]);
-      setHashtag("");
     }
   };
 

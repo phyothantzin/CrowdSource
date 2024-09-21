@@ -1,14 +1,13 @@
 "use client";
 
+import React, { useState } from "react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
-import { auth } from "@clerk/nextjs/server";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { usePathname } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+import { FaEdit, FaTrash, FaBookmark, FaEllipsisV } from "react-icons/fa";
 
-// Update the Place type to match the new data structure
 type Place = {
   _id: string;
   name: string;
@@ -19,6 +18,7 @@ type Place = {
   image: string; // base64 image
   user: {
     _id: string;
+    clerkId: string;
     username: string;
     picture: string;
   };
@@ -27,23 +27,46 @@ type Place = {
 };
 
 export default function PlaceCard({ place }: { place: Place }) {
-  const { userId } = auth();
-  const pathname = usePathname();
-  const isProfileRoute = pathname.includes("/profile");
+  const { userId } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const toggleDropdown = () => setShowDropdown(!showDropdown);
+  const closeDropdown = () => setShowDropdown(false);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden relative group">
-      {isProfileRoute && place.user._id === userId && (
-        <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Link href={`/recommendations/edit?id=${place._id.toString()}`}>
-            <FaEdit
-              className="text-blue-500 hover:text-blue-600 cursor-pointer"
-              size={20}
-            />
-          </Link>
-          <DeleteConfirmationDialog placeId={place._id.toString()} />
-        </div>
-      )}
+    <div className="bg-white rounded-lg shadow-md overflow-hidden relative">
+      <div className="absolute top-2 right-2 z-10">
+        <button
+          onClick={toggleDropdown}
+          className="text-gray-600 hover:text-gray-800"
+        >
+          <FaEllipsisV size={20} />
+        </button>
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
+            <div className="py-1">
+              <button
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                onClick={closeDropdown}
+              >
+                <FaBookmark className="mr-2" /> Save
+              </button>
+              {place.user.clerkId === userId && (
+                <>
+                  <Link
+                    href={`/recommendations/edit/${place._id}`}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    onClick={closeDropdown}
+                  >
+                    <FaEdit className="mr-2" /> Edit
+                  </Link>
+                  <DeleteConfirmationDialog placeId={place._id} />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Display the base64 image */}
       {place.image && (
@@ -97,17 +120,6 @@ export default function PlaceCard({ place }: { place: Place }) {
         </div>
 
         {/* Display creation time */}
-        {place.user._id === userId && (
-          <div className="flex justify-between items-center">
-            <Link
-              href={`/recommendations/edit?id=${place._id.toString()}`}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Edit
-            </Link>
-            <DeleteConfirmationDialog placeId={place._id.toString()} />
-          </div>
-        )}
         <p className="text-xs text-gray-400 mt-2">
           Created {formatDistanceToNow(new Date(place.createdAt))} ago
         </p>
