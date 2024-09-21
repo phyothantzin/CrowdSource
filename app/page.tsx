@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import PlaceCard from "./components/PlaceCard";
+import PlaceCard from "../components/PlaceCard";
 import { getPlaces } from "@/lib/actions/place.action";
 
 const Home = async () => {

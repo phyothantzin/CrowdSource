@@ -1,5 +1,5 @@
 import { getUserById } from "@/lib/actions/user.action";
-import CreateRecommendPlaceForm from "@/app/components/CreateRecommendPlaceForm";
+import CreateRecommendPlaceForm from "@/components/CreateRecommendPlaceForm";
 import { auth } from "@clerk/nextjs/server";
 
 const Page = async () => {

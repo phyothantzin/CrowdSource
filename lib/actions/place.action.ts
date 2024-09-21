@@ -80,3 +80,17 @@ export async function deletePlace(id: string) {
     throw new Error(`Failed to delete place: ${error.message}`);
   }
 }
+
+// Get places by user ID
+export async function getPlacesByUserId(params: { userId: string }) {
+  try {
+    const { userId } = params;
+    await connectDB();
+    const places = await Place.find({ user: userId })
+      .populate({ path: "user", model: User })
+      .sort({ createdAt: -1 });
+    return places;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch places: ${error.message}`);
+  }
+}
