@@ -1,0 +1,129 @@
+"use client";
+
+import React, { useState } from "react";
+import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
+import { useAuth } from "@clerk/nextjs";
+import { FaEdit, FaTrash, FaBookmark, FaEllipsisV } from "react-icons/fa";
+
+type Place = {
+  _id: string;
+  name: string;
+  description: string;
+  during: string;
+  location: string;
+  hashtags: string[];
+  image: string; // base64 image
+  user: {
+    _id: string;
+    clerkId: string;
+    username: string;
+    picture: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export default function PlaceCard({ place }: { place: Place }) {
+  const { userId } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const toggleDropdown = () => setShowDropdown(!showDropdown);
+  const closeDropdown = () => setShowDropdown(false);
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden relative">
+      <div className="absolute top-2 right-2 z-10">
+        <button
+          onClick={toggleDropdown}
+          className="text-gray-600 hover:text-gray-800"
+        >
+          <FaEllipsisV size={20} />
+        </button>
+        {showDropdown && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
+            <div className="py-1">
+              <button
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                onClick={closeDropdown}
+              >
+                <FaBookmark className="mr-2" /> Save
+              </button>
+              {place.user.clerkId === userId && (
+                <>
+                  <Link
+                    href={`/recommendations/edit/${place._id}`}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    onClick={closeDropdown}
+                  >
+                    <FaEdit className="mr-2" /> Edit
+                  </Link>
+                  <DeleteConfirmationDialog placeId={place._id} />
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Display the base64 image */}
+      {place.image && (
+        <div className="relative h-48">
+          <Image
+            src={place.image}
+            alt={place.name}
+            layout="fill"
+            objectFit="cover"
+          />
+        </div>
+      )}
+
+      <div className="p-4">
+        <h2 className="text-xl font-semibold mb-2">{place.name}</h2>
+        <p className="text-gray-600 mb-2">{place.description}</p>
+
+        {/* Display location and best times to visit */}
+        <p className="text-sm text-gray-500 mb-1">
+          <span className="font-medium">Location:</span> {place.location}
+        </p>
+        <p className="text-sm text-gray-500 mb-2">
+          <span className="font-medium">Best times to visit:</span>{" "}
+          {place.during}
+        </p>
+
+        {/* Display hashtags */}
+        {place.hashtags && place.hashtags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {place.hashtags.map((tag, index) => (
+              <span
+                key={index}
+                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Display user information */}
+        <div className="flex items-center mt-4">
+          <Image
+            src={place.user.picture}
+            alt={place.user.username}
+            width={32}
+            height={32}
+            className="rounded-full mr-2"
+          />
+          <span className="text-sm text-gray-600">{place.user.username}</span>
+        </div>
+
+        {/* Display creation time */}
+        <p className="text-xs text-gray-400 mt-2">
+          Created {formatDistanceToNow(new Date(place.createdAt))} ago
+        </p>
+      </div>
+    </div>
+  );
+}

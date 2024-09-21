@@ -15,6 +15,7 @@ const Header: React.FC = () => {
           </SignedOut>
           <SignedIn>
             <UserButton />
+            <Link href="/profile">Profile</Link>
             <Link
               href="/recommendations/create"
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"

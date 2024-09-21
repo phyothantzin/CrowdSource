@@ -1,17 +1,10 @@
 import Link from "next/link";
 
-import PlaceCard from "./components/PlaceCard";
+import PlaceCard from "../components/PlaceCard";
+import { getPlaces } from "@/lib/actions/place.action";
 
-export default function Home() {
-  const recommendedPlaces = [
-    {
-      id: 1,
-      photo: "./sample.png",
-      title: "Bagan",
-      description: "A fantastic experience",
-      hashtags: ["pagoda", "breathtaking"],
-    },
-  ];
+const Home = async () => {
+  const recommendedPlaces = await getPlaces();
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -22,9 +15,10 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {recommendedPlaces.map((place) => (
-              <PlaceCard key={place.id} place={place} />
+              <PlaceCard key={place._id} place={place} />
             ))}
           </div>
+
           <Link
             href="/recommendations"
             className="mt-6 inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -35,4 +29,6 @@ export default function Home() {
       </main>
     </div>
   );
-}
+};
+
+export default Home;
