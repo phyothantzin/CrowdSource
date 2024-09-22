@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { useAuth } from "@clerk/nextjs";
-import { FaEdit, FaTrash, FaBookmark, FaEllipsisV } from "react-icons/fa";
+import { FaEdit, FaEllipsisV, FaRegBookmark, FaBookmark } from "react-icons/fa";
+import { savePlace } from "@/lib/actions/place.action";
+import { useRouter } from "next/navigation";
+import { getUserById } from "@/lib/actions/user.action";
 
 type Place = {
   _id: string;
@@ -26,12 +29,27 @@ type Place = {
   updatedAt: string;
 };
 
-export default function PlaceCard({ place }: { place: Place }) {
+export default function PlaceCard(props: any) {
+  const place = JSON.parse(props.place);
   const { userId } = useAuth();
+  const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
   const closeDropdown = () => setShowDropdown(false);
+
+  const handleSave = async () => {
+    try {
+      await savePlace({
+        userId: place.user._id,
+        placeId: place._id,
+      });
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error("Failed to save place:", error);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden relative">
@@ -47,9 +65,17 @@ export default function PlaceCard({ place }: { place: Place }) {
             <div className="py-1">
               <button
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                onClick={closeDropdown}
+                onClick={() => {
+                  handleSave();
+                  closeDropdown();
+                }}
               >
-                <FaBookmark className="mr-2" /> Save
+                {isSaved ? (
+                  <FaBookmark className="mr-2" />
+                ) : (
+                  <FaRegBookmark className="mr-2" />
+                )}
+                {isSaved ? "Saved" : "Save"}
               </button>
               {place.user.clerkId === userId && (
                 <>
@@ -96,7 +122,7 @@ export default function PlaceCard({ place }: { place: Place }) {
         {/* Display hashtags */}
         {place.hashtags && place.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
-            {place.hashtags.map((tag, index) => (
+            {place.hashtags.map((tag: string, index: number) => (
               <span
                 key={index}
                 className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
