@@ -36,6 +36,12 @@ export default function PlaceCard(props: any) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  useEffect(() => {
+    if (place.user.saved.includes(place._id)) {
+      setIsSaved(true);
+    }
+  }, [place]);
+
   const toggleDropdown = () => setShowDropdown(!showDropdown);
   const closeDropdown = () => setShowDropdown(false);
 
