@@ -17,7 +17,10 @@ export default async function ProfilePage() {
         <h2 className="text-2xl font-semibold mb-4">Your Recommendations</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {places.map((place: any) => (
-            <PlaceCard key={place._id.toString()} place={place} />
+            <PlaceCard
+              key={place._id.toString()}
+              place={JSON.stringify(place)}
+            />
           ))}
         </div>
       </div>

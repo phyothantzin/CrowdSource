@@ -15,7 +15,7 @@ const Home = async () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {recommendedPlaces.map((place) => (
-              <PlaceCard key={place._id} place={place} />
+              <PlaceCard key={place._id} place={JSON.stringify(place)} />
             ))}
           </div>
 

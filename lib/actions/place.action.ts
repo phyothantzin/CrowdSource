@@ -3,6 +3,7 @@
 import { connectDB } from "../mongoose";
 import Place, { IPlace } from "@/database/place.model";
 import User from "@/database/user.model";
+import { error } from "console";
 import { revalidatePath } from "next/cache";
 
 // Create a new place
@@ -35,26 +36,7 @@ export async function getPlaces() {
       .populate({ path: "user", model: User }) // Populate user with name and image
       .sort({ createdAt: -1 });
 
-    // Serialize the places
-    const serializedPlaces = places.map((place) => ({
-      _id: place._id.toString(),
-      name: place.name,
-      description: place.description,
-      during: place.during,
-      location: place.location,
-      hashtags: place.hashtags,
-      image: place.image,
-      user: {
-        _id: place.user._id.toString(),
-        clerkId: place.user.clerkId,
-        username: place.user.username,
-        picture: place.user.picture,
-      },
-      createdAt: place.createdAt.toISOString(),
-      updatedAt: place.updatedAt.toISOString(),
-    }));
-
-    return serializedPlaces;
+    return places;
   } catch (error: any) {
     throw new Error(`Failed to fetch places: ${error.message}`);
   }
@@ -73,26 +55,7 @@ export async function getPlaceById(params: { id: string }) {
       throw new Error("Place not found");
     }
 
-    // Serialize the place
-    const serializedPlace = {
-      _id: place._id.toString(),
-      name: place.name,
-      description: place.description,
-      during: place.during,
-      location: place.location,
-      hashtags: place.hashtags,
-      image: place.image,
-      user: {
-        _id: place.user._id.toString(),
-        clerkId: place.user.clerkId,
-        username: place.user.username,
-        picture: place.user.picture,
-      },
-      createdAt: place.createdAt.toISOString(),
-      updatedAt: place.updatedAt.toISOString(),
-    };
-
-    return serializedPlace;
+    return place;
   } catch (error: any) {
     throw new Error(`Failed to fetch place: ${error.message}`);
   }
@@ -135,27 +98,41 @@ export async function getPlacesByUserId(params: { userId: string }) {
       .populate({ path: "user", model: User })
       .sort({ createdAt: -1 });
 
-    const serializedPlaces = places.map((place) => ({
-      _id: place._id.toString(),
-      name: place.name,
-      description: place.description,
-      during: place.during,
-      location: place.location,
-      hashtags: place.hashtags,
-      image: place.image,
-      user: {
-        _id: place.user._id.toString(),
-        clerkId: place.user.clerkId,
-        username: place.user.username,
-        picture: place.user.picture,
-      },
-
-      createdAt: place.createdAt.toISOString(),
-      updatedAt: place.updatedAt.toISOString(),
-    }));
-
-    return serializedPlaces;
+    return places;
   } catch (error: any) {
     throw new Error(`Failed to fetch places: ${error.message}`);
+  }
+}
+
+// Save a place
+export async function savePlace(params: { userId: string; placeId: string }) {
+  try {
+    await connectDB();
+    const { userId, placeId } = params;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const isPlaceSaved = user.saved.includes(placeId);
+
+    if (isPlaceSaved) {
+      await User.findByIdAndUpdate(
+        userId,
+        { $pull: { saved: placeId } },
+        { new: true }
+      );
+    } else {
+      await User.findByIdAndUpdate(
+        userId,
+        { $addToSet: { saved: placeId } },
+        { new: true }
+      );
+    }
+  } catch (error: any) {
+    console.error("Failed to save place:", error);
+    throw new Error(`Failed to save place: ${error.message}`);
   }
 }
