@@ -5,13 +5,14 @@ import PlaceCard from "./PlaceCard";
 
 export default function ProfileContent({
   userPlaces,
-  userSavedPlaces,
+  user,
 }: {
   userPlaces: any;
-  userSavedPlaces: any;
+  user: any;
 }) {
   const places = JSON.parse(userPlaces);
-  const savedPlaces = JSON.parse(userSavedPlaces);
+  const userDetails = JSON.parse(user);
+  const savedPlaces = userDetails.saved;
   const [activeTab, setActiveTab] = useState("recommendations");
 
   return (
@@ -68,6 +69,7 @@ export default function ProfileContent({
                   <PlaceCard
                     key={place._id.toString()}
                     place={JSON.stringify(place)}
+                    user={JSON.stringify(place.user)}
                     savedPlaces={savedPlaces.map((savedPlace: any) =>
                       savedPlace._id.toString()
                     )}

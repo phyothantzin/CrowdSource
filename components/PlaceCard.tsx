@@ -10,6 +10,7 @@ import { FaEdit, FaRegBookmark, FaBookmark, FaEllipsisH } from "react-icons/fa";
 import { savePlace } from "@/lib/actions/place.action";
 import { usePathname, useRouter } from "next/navigation";
 import { getUserById } from "@/lib/actions/user.action";
+import router from "next/router";
 
 type Place = {
   _id: string;
@@ -30,7 +31,11 @@ type Place = {
 };
 
 export default function PlaceCard(props: any) {
+  let user = null;
   const place = JSON.parse(props.place);
+  if (props.user) {
+    user = JSON.parse(props.user);
+  }
   const savedPlaces = props.savedPlaces;
   const path = usePathname();
   const { userId, isSignedIn } = useAuth();
@@ -38,6 +43,7 @@ export default function PlaceCard(props: any) {
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
   const closeDropdown = () => setShowDropdown(false);
@@ -156,13 +162,15 @@ export default function PlaceCard(props: any) {
         {/* Display user information */}
         <div className="flex items-center mt-4">
           <Image
-            src={place.user.picture}
-            alt={place.user.username}
+            src={place.user.picture || user.picture}
+            alt={place.user.username || user.username}
             width={32}
             height={32}
             className="rounded-full mr-2"
           />
-          <span className="text-sm text-gray-600">{place.user.username}</span>
+          <span className="text-sm text-gray-600">
+            {place.user.username || user.username}
+          </span>
         </div>
 
         {/* Display creation time */}

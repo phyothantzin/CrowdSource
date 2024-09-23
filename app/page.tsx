@@ -22,7 +22,7 @@ const Home = async () => {
               <PlaceCard
                 key={place._id.toString()}
                 place={JSON.stringify(place)}
-                iserSavedPlaces={user.saved.map((savedPlace: any) =>
+                savedPlaces={user.saved.map((savedPlace: any) =>
                   savedPlace._id.toString()
                 )}
               />
