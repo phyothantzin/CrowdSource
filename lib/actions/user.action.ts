@@ -2,12 +2,41 @@
 
 import User from "@/database/user.model";
 import { connectDB } from "../mongoose";
+import Place from "@/database/place.model";
+import mongoose from "mongoose";
 // import { revalidatePath } from "next/cache";
 
 export async function getUserById(userId: string) {
   try {
     connectDB();
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: userId })
+      .populate({
+        path: "saved",
+        model: Place,
+      })
+      .sort({ createdAt: -1 });
+
+    return user;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export async function getUserSavedPlaces(userId: string) {
+  try {
+    connectDB();
+    const user = await User.findOne({ clerkId: userId })
+      .populate({
+        path: "saved",
+        model: Place,
+        populate: {
+          path: "user",
+          model: User,
+          select: "username picture",
+        },
+      })
+      .sort({ createdAt: -1 });
 
     return user;
   } catch (error) {
@@ -22,7 +51,6 @@ export async function createUser(userData: any) {
     const newUser = await User.create(userData);
     return newUser;
   } catch (error) {
-    console.log(error);
     throw error;
   }
 }
@@ -37,7 +65,6 @@ export async function updateUser(params: any) {
       new: true,
     });
   } catch (error) {
-    console.log(error);
     throw error;
   }
 }
@@ -63,7 +90,6 @@ export async function deleteUser(params: any) {
 
     await User.findByIdAndDelete(user._id);
   } catch (error) {
-    console.log(error);
     throw error;
   }
 }
