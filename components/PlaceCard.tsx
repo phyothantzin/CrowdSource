@@ -6,7 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { useAuth } from "@clerk/nextjs";
-import { FaEdit, FaEllipsisV, FaRegBookmark, FaBookmark } from "react-icons/fa";
+import { FaEdit, FaRegBookmark, FaBookmark, FaEllipsisH } from "react-icons/fa";
 import { savePlace } from "@/lib/actions/place.action";
 import { useRouter } from "next/navigation";
 import { getUserById } from "@/lib/actions/user.action";
@@ -31,7 +31,7 @@ type Place = {
 
 export default function PlaceCard(props: any) {
   const place = JSON.parse(props.place);
-  const { userId } = useAuth();
+  const { userId, isSignedIn } = useAuth();
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -46,6 +46,11 @@ export default function PlaceCard(props: any) {
   const closeDropdown = () => setShowDropdown(false);
 
   const handleSave = async () => {
+    if (!isSignedIn) {
+      router.push("/sign-in");
+      return;
+    }
+
     try {
       await savePlace({
         userId: place.user._id,
@@ -64,7 +69,7 @@ export default function PlaceCard(props: any) {
           onClick={toggleDropdown}
           className="text-gray-600 hover:text-gray-800"
         >
-          <FaEllipsisV size={20} />
+          <FaEllipsisH size={20} />
         </button>
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
