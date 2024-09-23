@@ -5,6 +5,8 @@ import Place, { IPlace } from "@/database/place.model";
 import User from "@/database/user.model";
 import { error } from "console";
 import { revalidatePath } from "next/cache";
+import path from "path";
+import { getUserById } from "./user.action";
 
 // Create a new place
 export async function createPlace(params: any) {
@@ -105,12 +107,16 @@ export async function getPlacesByUserId(params: { userId: string }) {
 }
 
 // Save a place
-export async function savePlace(params: { userId: string; placeId: string }) {
+export async function savePlace(params: {
+  userId: string;
+  placeId: string;
+  path: string;
+}) {
   try {
     await connectDB();
-    const { userId, placeId } = params;
+    const { userId, placeId, path } = params;
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({ clerkId: userId });
 
     if (!user) {
       throw new Error("User not found");
@@ -120,17 +126,18 @@ export async function savePlace(params: { userId: string; placeId: string }) {
 
     if (isPlaceSaved) {
       await User.findByIdAndUpdate(
-        userId,
+        user._id,
         { $pull: { saved: placeId } },
         { new: true }
       );
     } else {
       await User.findByIdAndUpdate(
-        userId,
+        user._id,
         { $addToSet: { saved: placeId } },
         { new: true }
       );
     }
+    revalidatePath(path);
   } catch (error: any) {
     console.error("Failed to save place:", error);
     throw new Error(`Failed to save place: ${error.message}`);

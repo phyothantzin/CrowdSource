@@ -2,12 +2,18 @@
 
 import User from "@/database/user.model";
 import { connectDB } from "../mongoose";
+import Place from "@/database/place.model";
 // import { revalidatePath } from "next/cache";
 
 export async function getUserById(userId: string) {
   try {
     connectDB();
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: userId })
+      .populate({
+        path: "saved",
+        model: Place,
+      })
+      .sort({ createdAt: -1 });
 
     return user;
   } catch (error) {

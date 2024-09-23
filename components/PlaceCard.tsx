@@ -8,7 +8,7 @@ import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import { useAuth } from "@clerk/nextjs";
 import { FaEdit, FaRegBookmark, FaBookmark, FaEllipsisH } from "react-icons/fa";
 import { savePlace } from "@/lib/actions/place.action";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getUserById } from "@/lib/actions/user.action";
 
 type Place = {
@@ -31,19 +31,22 @@ type Place = {
 
 export default function PlaceCard(props: any) {
   const place = JSON.parse(props.place);
+  const savedPlaces = props.savedPlaces;
+  const path = usePathname();
   const { userId, isSignedIn } = useAuth();
+
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  useEffect(() => {
-    if (place.user.saved.includes(place._id)) {
-      setIsSaved(true);
-    }
-  }, [place]);
-
   const toggleDropdown = () => setShowDropdown(!showDropdown);
   const closeDropdown = () => setShowDropdown(false);
+
+  useEffect(() => {
+    if (savedPlaces.includes(place._id)) {
+      setIsSaved(true);
+    }
+  }, [savedPlaces, place._id]);
 
   const handleSave = async () => {
     if (!isSignedIn) {
@@ -53,8 +56,9 @@ export default function PlaceCard(props: any) {
 
     try {
       await savePlace({
-        userId: place.user._id,
+        userId: userId,
         placeId: place._id,
+        path: path,
       });
       setIsSaved(!isSaved);
     } catch (error) {
@@ -69,25 +73,30 @@ export default function PlaceCard(props: any) {
           onClick={toggleDropdown}
           className="text-gray-600 hover:text-gray-800"
         >
-          <FaEllipsisH size={20} />
+          <FaEllipsisH
+            className="text-white hover:text-gray-300 transition-all duration-200"
+            size={20}
+          />
         </button>
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
             <div className="py-1">
-              <button
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                onClick={() => {
-                  handleSave();
-                  closeDropdown();
-                }}
-              >
-                {isSaved ? (
-                  <FaBookmark className="mr-2" />
-                ) : (
-                  <FaRegBookmark className="mr-2" />
-                )}
-                {isSaved ? "Saved" : "Save"}
-              </button>
+              {place.user.clerkId !== userId && (
+                <button
+                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                  onClick={() => {
+                    handleSave();
+                    closeDropdown();
+                  }}
+                >
+                  {isSaved ? (
+                    <FaBookmark className="mr-2" />
+                  ) : (
+                    <FaRegBookmark className="mr-2" />
+                  )}
+                  {isSaved ? "Saved" : "Save"}
+                </button>
+              )}
               {place.user.clerkId === userId && (
                 <>
                   <Link
