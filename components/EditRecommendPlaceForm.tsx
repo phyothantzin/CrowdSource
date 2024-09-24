@@ -4,8 +4,11 @@ import { ChangeEvent, useState } from "react";
 import Image from "next/image";
 import { updatePlace } from "@/lib/actions/place.action";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
-export default function EditRecommendPlaceForm({ place }: { place: any }) {
+export default function EditRecommendPlaceForm(props: any) {
+  const place = JSON.parse(props.place);
+
   const router = useRouter();
   const [name, setName] = useState(place.name);
   const [description, setDescription] = useState(place.description);
@@ -60,8 +63,10 @@ export default function EditRecommendPlaceForm({ place }: { place: any }) {
         hashtags,
         image: image ? await convertImageToBase64(image) : place.image,
       });
+      toast.success("Recommendation updated successfully");
       router.push("/profile");
     } catch (error) {
+      toast.error("Failed to update recommended place");
       console.error(error);
     }
   };
