@@ -7,7 +7,7 @@ import { auth } from "@clerk/nextjs/server";
 
 const Home = async () => {
   const { userId } = auth();
-  const recommendedPlaces = await getPlaces();
+  const { places, isNext } = await getPlaces({});
   const user = await getUserById(userId!);
 
   return (
@@ -18,7 +18,7 @@ const Home = async () => {
             Discover the Best Recommendations
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recommendedPlaces.map((place) => (
+            {places.map((place) => (
               <PlaceCard
                 key={place._id.toString()}
                 place={JSON.stringify(place)}
