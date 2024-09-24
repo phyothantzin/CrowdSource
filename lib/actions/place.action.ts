@@ -14,7 +14,7 @@ export async function createPlace(params: any) {
     await connectDB();
     const { name, description, during, location, hashtags, image, user } =
       params;
-    const newPlace = await Place.create({
+    await Place.create({
       name,
       description,
       during,
@@ -23,7 +23,7 @@ export async function createPlace(params: any) {
       image,
       user,
     });
-    return newPlace;
+    revalidatePath("/");
   } catch (error: any) {
     console.error("Failed to create place:", error);
     throw new Error(`Failed to create place: ${error.message}`);
@@ -97,10 +97,9 @@ export async function updatePlace(id: string, updateData: Partial<IPlace>) {
     await connectDB();
     const updatedPlace = await Place.findByIdAndUpdate(id, updateData, {
       new: true,
-      runValidators: true,
     }).populate("user", "username image");
     if (!updatedPlace) throw new Error("Place not found");
-    return updatedPlace;
+    revalidatePath("/profile");
   } catch (error: any) {
     throw new Error(`Failed to update place: ${error.message}`);
   }

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createPlace } from "@/lib/actions/place.action";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function CreateRecommendPlaceForm({
   userId,
@@ -17,6 +19,8 @@ export default function CreateRecommendPlaceForm({
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const router = useRouter();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,7 +55,10 @@ export default function CreateRecommendPlaceForm({
         image: image ? await convertImageToBase64(image) : null,
         user: JSON.parse(userId),
       });
+      toast.success("Recommendation created successfully");
+      router.push("/");
     } catch (error) {
+      toast.error("Failed to create recommended place");
       console.error(error);
     }
   };
