@@ -31,14 +31,42 @@ export async function createPlace(params: any) {
 }
 
 // Get all places
-export async function getPlaces() {
+export async function getPlaces(params: {
+  searchQuery?: string;
+  page?: number;
+  pageSize?: number;
+  tag?: string;
+}) {
   try {
     await connectDB();
-    const places = await Place.find()
-      .populate({ path: "user", model: User }) // Populate user with name and image
-      .sort({ createdAt: -1 });
+    const { searchQuery = "", page = 1, pageSize = 10, tag = "" } = params;
 
-    return places;
+    const skipAmount = (page - 1) * pageSize;
+
+    let query: any = {};
+
+    if (searchQuery) {
+      query.$or = [
+        { name: { $regex: new RegExp(searchQuery, "i") } },
+        { description: { $regex: new RegExp(searchQuery, "i") } },
+      ];
+    }
+
+    if (tag) {
+      query.hashtags = { $in: tag };
+    }
+
+    const places = await Place.find(query)
+      .populate({ path: "user", model: User })
+      .sort({ createdAt: -1 })
+      .skip(skipAmount)
+      .limit(pageSize);
+
+    const totalPlaces = await Place.countDocuments(query);
+
+    const isNext = totalPlaces > skipAmount + places.length;
+
+    return { places, isNext };
   } catch (error: any) {
     throw new Error(`Failed to fetch places: ${error.message}`);
   }

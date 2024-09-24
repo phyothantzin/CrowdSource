@@ -72,6 +72,10 @@ export default function PlaceCard(props: any) {
     }
   };
 
+  const handleTagClick = (tag: string) => {
+    router.push(`/recommendations/search?tag=${encodeURIComponent(tag)}`);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden relative">
       <div className="absolute top-2 right-2 z-10">
@@ -149,12 +153,13 @@ export default function PlaceCard(props: any) {
         {place.hashtags && place.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {place.hashtags.map((tag: string, index: number) => (
-              <span
+              <button
                 key={index}
-                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                onClick={() => handleTagClick(tag)}
+                className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200 transition-colors duration-200"
               >
                 {tag}
-              </span>
+              </button>
             ))}
           </div>
         )}
