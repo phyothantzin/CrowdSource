@@ -49,6 +49,7 @@ export async function getPlaces(params: {
       query.$or = [
         { name: { $regex: new RegExp(searchQuery, "i") } },
         { description: { $regex: new RegExp(searchQuery, "i") } },
+        { location: { $regex: new RegExp(searchQuery, "i") } },
       ];
     }
 
