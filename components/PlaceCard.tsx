@@ -10,7 +10,7 @@ import { FaEdit, FaRegBookmark, FaBookmark, FaEllipsisH } from "react-icons/fa";
 import { savePlace } from "@/lib/actions/place.action";
 import { usePathname, useRouter } from "next/navigation";
 import { getUserById } from "@/lib/actions/user.action";
-import router from "next/router";
+import router from "next/navigation";
 
 type Place = {
   _id: string;
@@ -74,6 +74,12 @@ export default function PlaceCard(props: any) {
 
   const handleTagClick = (tag: string) => {
     router.push(`/recommendations/search?tag=${encodeURIComponent(tag)}`);
+  };
+
+  const handleLocationSearch = (location: string) => {
+    router.push(
+      `/recommendations/search?q=${encodeURIComponent(location.trim())}`
+    );
   };
 
   return (
@@ -140,9 +146,20 @@ export default function PlaceCard(props: any) {
         <h2 className="text-xl font-semibold mb-2">{place.name}</h2>
         <p className="text-gray-600 mb-2">{place.description}</p>
 
-        {/* Display location and best times to visit */}
+        {/* Updated location display */}
         <p className="text-sm text-gray-500 mb-1">
-          <span className="font-medium">Location:</span> {place.location}
+          <span className="font-medium">Location:</span>{" "}
+          {place.location.split(",").map((loc: string, index: number) => (
+            <React.Fragment key={index}>
+              {index > 0 && ", "}
+              <button
+                onClick={() => handleLocationSearch(loc)}
+                className="text-blue-600 hover:underline"
+              >
+                {loc.trim()}
+              </button>
+            </React.Fragment>
+          ))}
         </p>
         <p className="text-sm text-gray-500 mb-2">
           <span className="font-medium">Best times to visit:</span>{" "}
