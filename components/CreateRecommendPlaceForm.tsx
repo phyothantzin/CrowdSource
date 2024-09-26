@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { createPlace } from "@/lib/actions/place.action";
+import { createPlace, trackPlaceInteraction } from "@/lib/actions/place.action";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
@@ -46,7 +46,7 @@ export default function CreateRecommendPlaceForm({
     e.preventDefault();
 
     try {
-      await createPlace({
+      const newPlace = await createPlace({
         name,
         description,
         during,
@@ -55,6 +55,15 @@ export default function CreateRecommendPlaceForm({
         image: image ? await convertImageToBase64(image) : null,
         user: JSON.parse(userId),
       });
+      // Track the create interaction
+      if (newPlace) {
+        await trackPlaceInteraction({
+          userId: userId,
+          placeId: newPlace._id,
+          action: "create",
+        });
+      }
+
       toast.success("Recommendation created successfully");
       router.push("/");
     } catch (error) {

@@ -11,6 +11,7 @@ import { savePlace } from "@/lib/actions/place.action";
 import { usePathname, useRouter } from "next/navigation";
 import { getUserById } from "@/lib/actions/user.action";
 import router from "next/navigation";
+import { trackPlaceInteraction } from "@/lib/actions/place.action";
 
 type Place = {
   _id: string;
@@ -49,7 +50,7 @@ export default function PlaceCard(props: any) {
   const closeDropdown = () => setShowDropdown(false);
 
   useEffect(() => {
-    if (savedPlaces.includes(place._id)) {
+    if (savedPlaces?.includes(place._id)) {
       setIsSaved(true);
     }
   }, [savedPlaces, place._id]);
@@ -59,7 +60,6 @@ export default function PlaceCard(props: any) {
       router.push("/sign-in");
       return;
     }
-
     try {
       await savePlace({
         userId: userId,
@@ -67,20 +67,52 @@ export default function PlaceCard(props: any) {
         path: path,
       });
       setIsSaved(!isSaved);
+
+      // Track the save interaction
+      await trackPlaceInteraction({
+        userId: userId,
+        placeId: place._id,
+        action: isSaved ? "unsave" : "save",
+      });
     } catch (error) {
       console.error("Failed to save place:", error);
     }
   };
 
-  const handleTagClick = (tag: string) => {
+  const handleTagClick = async (tag: string) => {
+    if (isSignedIn) {
+      await trackPlaceInteraction({
+        userId: userId,
+        placeId: place._id,
+        action: "tag_click",
+      });
+    }
     router.push(`/recommendations/search?tag=${encodeURIComponent(tag)}`);
   };
 
-  const handleLocationSearch = (location: string) => {
+  const handleLocationSearch = async (location: string) => {
+    if (isSignedIn) {
+      await trackPlaceInteraction({
+        userId: userId,
+        placeId: place._id,
+        action: "location_search",
+      });
+    }
     router.push(
       `/recommendations/search?q=${encodeURIComponent(location.trim())}`
     );
   };
+
+  // Add a new function to track place view
+  useEffect(() => {
+    if (isSignedIn) {
+      trackPlaceInteraction({
+        userId: userId,
+        placeId: place._id,
+        action: "view",
+      });
+    }
+  }, [isSignedIn, userId, place._id]);
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden relative">
@@ -97,7 +129,7 @@ export default function PlaceCard(props: any) {
         {showDropdown && (
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
             <div className="py-1">
-              {place.user.clerkId !== userId && (
+              {isSignedIn && place.user.clerkId !== userId ? (
                 <button
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                   onClick={() => {
@@ -112,6 +144,8 @@ export default function PlaceCard(props: any) {
                   )}
                   {isSaved ? "Saved" : "Save"}
                 </button>
+              ) : (
+                <></>
               )}
               {place.user.clerkId === userId && (
                 <>

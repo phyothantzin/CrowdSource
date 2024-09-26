@@ -7,6 +7,7 @@ import { error } from "console";
 import { revalidatePath } from "next/cache";
 import path from "path";
 import { getUserById } from "./user.action";
+import Interaction from "@/database/interaction.model";
 
 // Create a new place
 export async function createPlace(params: any) {
@@ -14,7 +15,7 @@ export async function createPlace(params: any) {
     await connectDB();
     const { name, description, during, location, hashtags, image, user } =
       params;
-    await Place.create({
+    const newPlace = await Place.create({
       name,
       description,
       during,
@@ -24,6 +25,7 @@ export async function createPlace(params: any) {
       user,
     });
     revalidatePath("/");
+    return newPlace;
   } catch (error: any) {
     console.error("Failed to create place:", error);
     throw new Error(`Failed to create place: ${error.message}`);
@@ -169,5 +171,167 @@ export async function savePlace(params: {
   } catch (error: any) {
     console.error("Failed to save place:", error);
     throw new Error(`Failed to save place: ${error.message}`);
+  }
+}
+
+// Get recommended places
+export async function getRecommendedPlaces(params: {
+  userId: string;
+  page?: number;
+  pageSize?: number;
+  searchQuery?: string;
+}) {
+  try {
+    await connectDB();
+
+    const { userId, page = 1, pageSize = 20, searchQuery } = params;
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) throw new Error("User not found");
+
+    const skipAmount = (page - 1) * pageSize;
+
+    // Get recent interactions
+    const recentInteractions = await Interaction.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .limit(50) // Increased limit to capture more interactions
+      .exec();
+
+    // Prioritize interactions
+    const savedPlaces = recentInteractions
+      .filter((interaction) => interaction.action === "save")
+      .map((interaction) => interaction.place);
+
+    const searchTerms = recentInteractions
+      .filter((interaction) => interaction.action === "search")
+      .flatMap((interaction) => interaction.search || []);
+
+    const tags = recentInteractions
+      .filter((interaction) => interaction.tags && interaction.tags.length > 0)
+      .flatMap((interaction) => interaction.tags || []);
+
+    // Count view interactions for each place
+    const viewCounts = recentInteractions
+      .filter((interaction) => interaction.action === "view")
+      .reduce((acc, interaction) => {
+        acc[interaction.place.toString()] =
+          (acc[interaction.place.toString()] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+    // Places viewed more than 10 times
+    const frequentlyViewedPlaces = Object.entries(viewCounts)
+      .filter(([_, count]) => (count as number) >= 10)
+      .map(([placeId, _]) => placeId);
+
+    let query: any = {
+      $or: [
+        { _id: { $in: savedPlaces } }, // Prioritize saved places
+        {
+          $or: [
+            // Then search terms
+            { name: { $regex: new RegExp(searchTerms.join("|"), "i") } },
+            { description: { $regex: new RegExp(searchTerms.join("|"), "i") } },
+          ],
+        },
+        { hashtags: { $in: tags } }, // Then tags
+        { _id: { $in: frequentlyViewedPlaces } }, // Then frequently viewed places
+      ],
+      user: { $ne: user._id }, // Exclude the current user's own places
+    };
+
+    if (searchQuery) {
+      query.$and = [
+        {
+          $or: [
+            { name: { $regex: searchQuery, $options: "i" } },
+            { description: { $regex: searchQuery, $options: "i" } },
+            { location: { $regex: searchQuery, $options: "i" } },
+          ],
+        },
+      ];
+    }
+
+    const totalPlaces = await Place.countDocuments(query);
+
+    const recommendedPlaces = await Place.find(query)
+      .populate({ path: "user", model: User, select: "username picture" })
+      .skip(skipAmount)
+      .limit(pageSize)
+      .sort({ createdAt: -1 });
+
+    const isNext = totalPlaces > skipAmount + recommendedPlaces.length;
+
+    // If no recommendations, fall back to recent places
+    if (recommendedPlaces.length === 0) {
+      const recentPlaces = await Place.find({ user: { $ne: user._id } })
+        .populate({ path: "user", model: User, select: "username picture" })
+        .skip(skipAmount)
+        .limit(pageSize)
+        .sort({ createdAt: -1 });
+
+      return {
+        places: recentPlaces,
+        isNext: false,
+      };
+    }
+
+    return {
+      places: recommendedPlaces,
+      isNext,
+    };
+  } catch (error: any) {
+    console.error("Failed to fetch recommended places:", error);
+    throw new Error(`Failed to fetch recommended places: ${error.message}`);
+  }
+}
+
+// Track place interaction
+export async function trackPlaceInteraction(params: {
+  userId: string;
+  placeId: string;
+  action: string;
+}) {
+  try {
+    await connectDB();
+    const { userId, placeId, action } = params;
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) throw new Error("User not found");
+
+    const place = await Place.findById(placeId);
+    if (!place) throw new Error("Place not found");
+
+    await Interaction.create({
+      user: user._id,
+      place: place._id,
+      action,
+      tags: place.hashtags,
+    });
+  } catch (error: any) {
+    console.error("Failed to track place interaction:", error);
+    throw new Error(`Failed to track place interaction: ${error.message}`);
+  }
+}
+
+export async function trackSearchInteraction(params: {
+  userId: string;
+  searchQuery: string;
+}) {
+  try {
+    await connectDB();
+    const { userId, searchQuery } = params;
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) throw new Error("User not found");
+
+    await Interaction.create({
+      user: user._id,
+      action: "search",
+      search: [searchQuery],
+    });
+  } catch (error: any) {
+    console.error("Failed to track search interaction:", error);
+    throw new Error(`Failed to track search interaction: ${error.message}`);
   }
 }
