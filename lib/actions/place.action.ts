@@ -112,8 +112,13 @@ export async function updatePlace(id: string, updateData: Partial<IPlace>) {
 export async function deletePlace(id: string) {
   try {
     await connectDB();
+
+    // Delete associated interactions first
+    await Interaction.deleteMany({ place: id });
+
     const deletedPlace = await Place.findByIdAndDelete(id);
     if (!deletedPlace) throw new Error("Place not found");
+
     revalidatePath("/places"); // Adjust the path as needed
     return deletedPlace;
   } catch (error: any) {

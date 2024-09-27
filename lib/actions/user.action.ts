@@ -4,6 +4,7 @@ import User from "@/database/user.model";
 import { connectDB } from "../mongoose";
 import Place from "@/database/place.model";
 import mongoose from "mongoose";
+import Interaction from "@/database/interaction.model";
 // import { revalidatePath } from "next/cache";
 
 export async function getUserById(userId: string) {
@@ -81,13 +82,13 @@ export async function deleteUser(params: any) {
       throw new Error("User not found");
     }
 
-    // Delete user from db and questions, answers, comments, etc...
-    // const userQuestionIds = await Question.find({ author: user._id }).distinct(
-    //   "_id"
-    // );
+    // Delete associated interactions
+    await Interaction.deleteMany({ user: user._id });
 
-    // await Place.deleteMany({ author: user._id });
+    // Delete user's places
+    await Place.deleteMany({ user: user._id });
 
+    // Delete the user
     await User.findByIdAndDelete(user._id);
   } catch (error) {
     throw error;
